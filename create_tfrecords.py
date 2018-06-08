@@ -28,7 +28,7 @@ from datetime import datetime
 import hashlib
 import json
 import os
-from Queue import Queue
+from queue import Queue
 import random
 import sys
 import threading
@@ -66,8 +66,8 @@ def _validate_text(text):
     else:
         return str(text)
 
-def _convert_to_example(image_example, image_buffer, height, width, colorspace='RGB',
-                        channels=3, image_format='JPEG'):
+def _convert_to_example(image_example, image_buffer, height, width, colorspace=b'RGB',
+                        channels=3, image_format=b'JPEG'):
     """Build an Example proto for an example.
     Args:
       image_example: dict, an image example
@@ -126,38 +126,38 @@ def _convert_to_example(image_example, image_buffer, height, width, colorspace='
     example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': _int64_feature(height),
         'image/width': _int64_feature(width),
-        'image/colorspace': _bytes_feature(colorspace),
-        'image/channels': _int64_feature(channels),
+#         'image/colorspace': _bytes_feature(colorspace),
+#         'image/channels': _int64_feature(channels),
         'image/format': _bytes_feature(image_format),
-        'image/filename': _bytes_feature(filename),
-        'image/id': _bytes_feature(image_id),
+#         'image/filename': _bytes_feature(filename.encode()),
+#         'image/id': _bytes_feature(image_id.encode()),
         'image/encoded': _bytes_feature(image_buffer),
-        'image/extra': _bytes_feature(extra_info),
-        'image/class/label': _int64_feature(class_label),
-        'image/class/text': _bytes_feature(class_text),
-        'image/class/conf': _float_feature(class_conf),
-        'image/object/bbox/xmin': _float_feature(xmin),
-        'image/object/bbox/xmax': _float_feature(xmax),
-        'image/object/bbox/ymin': _float_feature(ymin),
-        'image/object/bbox/ymax': _float_feature(ymax),
-        'image/object/bbox/label': _int64_feature(bbox_labels),
-        'image/object/bbox/text': _bytes_feature(bbox_text),
-        'image/object/bbox/conf': _float_feature(bbox_label_confs),
-        'image/object/bbox/score' : _float_feature(bbox_scores),
-        'image/object/parts/x' : _float_feature(parts_x),
-        'image/object/parts/y' : _float_feature(parts_y),
-        'image/object/parts/v' : _int64_feature(parts_v),
-        'image/object/parts/score' : _float_feature(parts_s),
-        'image/object/count' : _int64_feature(object_count),
-        'image/object/area' : _float_feature(object_areas),
-        'image/object/id' : _bytes_feature(object_ids),
+#         'image/extra': _bytes_feature(extra_info),
+        'image/label': _int64_feature(int(class_label)),
+#         'image/class/text': _bytes_feature(class_text),
+#         'image/class/conf': _float_feature(class_conf),
+#         'image/object/bbox/xmin': _float_feature(xmin),
+#         'image/object/bbox/xmax': _float_feature(xmax),
+#         'image/object/bbox/ymin': _float_feature(ymin),
+#         'image/object/bbox/ymax': _float_feature(ymax),
+#         'image/object/bbox/label': _int64_feature(bbox_labels),
+#         'image/object/bbox/text': _bytes_feature(bbox_text),
+#         'image/object/bbox/conf': _float_feature(bbox_label_confs),
+#         'image/object/bbox/score' : _float_feature(bbox_scores),
+#         'image/object/parts/x' : _float_feature(parts_x),
+#         'image/object/parts/y' : _float_feature(parts_y),
+#         'image/object/parts/v' : _int64_feature(parts_v),
+#         'image/object/parts/score' : _float_feature(parts_s),
+#         'image/object/count' : _int64_feature(object_count),
+#         'image/object/area' : _float_feature(object_areas),
+#         'image/object/id' : _bytes_feature(object_ids),
 
-        # Additional fields for the format needed by the Object Detection repository
-        'image/source_id': _bytes_feature(image_id),
-        'image/key/sha256': _bytes_feature(key),
-        'image/object/class/label': _int64_feature(bbox_labels),
-        'image/object/class/text': _bytes_feature(bbox_text),
-        'image/object/is_crowd': _int64_feature(is_crowd)
+#         # Additional fields for the format needed by the Object Detection repository
+#         'image/source_id': _bytes_feature(image_id),
+#         'image/key/sha256': _bytes_feature(key),
+#         'image/object/class/label': _int64_feature(bbox_labels),
+#         'image/object/class/text': _bytes_feature(bbox_text),
+#         'image/object/is_crowd': _int64_feature(is_crowd)
 
     }))
     return example
@@ -213,7 +213,7 @@ def _process_image(filename, coder):
       width: integer, image width in pixels.
     """
     # Read the image file.
-    image_data = tf.gfile.FastGFile(filename, 'r').read()
+    image_data = tf.gfile.FastGFile(filename, 'rb').read()
 
     # Clean the dirty data.
     if _is_png(filename):
@@ -260,10 +260,10 @@ def _process_image_files_batch(coder, thread_index, ranges, name, output_directo
 
     counter = 0
     error_counter = 0
-    for s in xrange(num_shards_per_batch):
+    for s in range(num_shards_per_batch):
         # Generate a sharded version of the file name, e.g. 'train-00002-of-00010'
         shard = thread_index * num_shards_per_batch + s
-        output_filename = '%s-%.5d-of-%.5d' % (name, shard, num_shards)
+        output_filename = '%s-%.5d-of-%.5d.tfrecord' % (name, shard, num_shards)
         output_file = os.path.join(output_directory, output_filename)
         writer = tf.python_io.TFRecordWriter(output_file)
 
@@ -368,7 +368,7 @@ def create(dataset, dataset_name, output_directory, num_shards, num_threads, shu
     spacing = np.linspace(0, len(dataset), num_threads + 1).astype(np.int)
     ranges = []
     threads = []
-    for i in xrange(len(spacing) - 1):
+    for i in range(len(spacing) - 1):
         ranges.append([spacing[i], spacing[i+1]])
 
     # Launch a thread for each batch.
@@ -385,7 +385,7 @@ def create(dataset, dataset_name, output_directory, num_shards, num_threads, shu
     error_queue = Queue()
 
     threads = []
-    for thread_index in xrange(len(ranges)):
+    for thread_index in range(len(ranges)):
         args = (coder, thread_index, ranges, dataset_name, output_directory, dataset,
                 num_shards, store_images, error_queue)
         t = threading.Thread(target=_process_image_files_batch, args=args)
@@ -448,6 +448,7 @@ def main():
 
     with open(args.dataset_path) as f:
         dataset = json.load(f)
+       
 
     errors = create(
         dataset=dataset,
